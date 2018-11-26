@@ -47,7 +47,7 @@ for ind in feeds.index:
 
     df = pd.DataFrame(i,columns=["title","link","summary","published"])
 
-df = df.drop_duplicates("title", keep="first")
+df = df.drop_duplicates("title", keep="last")
 
 tarkastus = raw_input('Do you want to update old file?(Y/N): ')
 tarkastus = tarkastus.lower()
