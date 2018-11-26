@@ -6,6 +6,8 @@ sys.setdefaultencoding('utf8')
 import feedparser
 import pandas as pd
 import os
+from lxml import etree
+import urllib2
 
 #Csv tiedoston lukeminen
 polku = raw_input('Path for the feed file without user: ')
@@ -23,27 +25,42 @@ i=[]
 
 for ind in feeds.index:
     link = feeds.loc[ind,"feeds"]
-    feed = feedparser.parse(link)
+    print link
+    if "xml" in link:
+        #XML
+        headers = { 'User-Agent' : 'Mozilla/5.0' }
+        req = urllib2.Request(link, None, headers)
+        reddit_file = urllib2.urlopen(req).read()
 
-    feed_title = feed['feed']['title']
-    feed_entries = feed.entries
+        reddit = etree.fromstring(reddit_file)
 
+        for item in reddit.xpath('/rss/channel/item'):
 
+            article_title = item.xpath("./title/text()")[0]
+            article_link = item.xpath("./link/text()")[0]
+            article_summary = item.xpath("./description/text()")[0]
+            article_published_at_parsed = item.xpath("./pubDate/text()")[0]
+            i.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
 
-    for entry in feed.entries:
+    else:
+        feed = feedparser.parse(link)
 
+        feed_title = feed['feed']['title']
+        feed_entries = feed.entries
 
-        article_title = entry.title
-        article_link = entry.link
-        article_summary = entry.summary
-        article_published_at = entry.published # Unicode string
-        article_published_at_parsed = entry.published_parsed # Time object
-        i.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
+        for entry in feed.entries:
 
-        print "Title: {}".format(article_title.encode("utf-8"))
-        print "link: {}".format(article_link.encode("utf-8"))
-        print "Summary: {}".format(article_summary).encode("utf-8")
-        print "Published at {}".format(article_published_at.encode("utf-8"))
+            article_title = entry.title
+            article_link = entry.link
+            article_summary = entry.summary
+            article_published_at = entry.published # Unicode string
+            article_published_at_parsed = entry.published_parsed # Time object
+            i.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
+
+            print "Title: {}".format(article_title.encode("utf-8"))
+            print "link: {}".format(article_link.encode("utf-8"))
+            print "Summary: {}".format(article_summary).encode("utf-8")
+            print "Published at {}".format(article_published_at.encode("utf-8"))
 
     df = pd.DataFrame(i,columns=["title","link","summary","published"])
 
