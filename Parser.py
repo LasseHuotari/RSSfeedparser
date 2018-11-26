@@ -19,8 +19,6 @@ if ".csv" not in tiedostonimi:
 maara = raw_input('How many iterations: ')
 odotus = raw_input('Set waiting time between iterations in seconds: ')
 
-maara = int(maara)
-odotus= int(odotus)
 
 userhome = os.path.expanduser('~')
 path= os.path.join(userhome, polku, tiedostonimi)
@@ -30,7 +28,7 @@ feeds = pd.read_csv(path, sep=";",encoding="UTF-8-sig")
 list=[]
 x = 0
 
-for i in range(maara):
+for i in range(int(maara)):
     for ind in feeds.index:
         link = feeds.loc[ind,"feeds"]
         print link
@@ -68,9 +66,9 @@ for i in range(maara):
 
         df = pd.DataFrame(list,columns=["title","link","summary","published"])
     x=x+1
-    print("Iteration",x)
+    print "Iteration", x
     if x < maara:
-        time.sleep(odotus)
+        time.sleep(int(odotus))
 
 
 tarkastus = raw_input('Do you want to update old file?(Y/N): ')
