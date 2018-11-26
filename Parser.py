@@ -8,7 +8,7 @@ import pandas as pd
 import os
 
 #Csv tiedoston lukeminen
-polku = raw_input('Import path without user: ')
+polku = raw_input('Path for the feed file without user: ')
 tiedostonimi = raw_input('Type file name for the feed file: ')
 if ".csv" not in tiedostonimi:
     tiedostonimi = tiedostonimi + ".csv"
