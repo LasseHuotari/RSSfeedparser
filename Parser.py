@@ -67,7 +67,7 @@ for i in range(int(maara)):
         df = pd.DataFrame(list,columns=["title","link","summary","published"])
     x=x+1
     print "Iteration", x
-    if x < maara:
+    if x < int(maara):
         time.sleep(int(odotus))
 
 
