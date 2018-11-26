@@ -57,10 +57,6 @@ for ind in feeds.index:
             article_published_at_parsed = entry.published_parsed # Time object
             i.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
 
-            print "Title: {}".format(article_title.encode("utf-8"))
-            print "link: {}".format(article_link.encode("utf-8"))
-            print "Summary: {}".format(article_summary).encode("utf-8")
-            print "Published at {}".format(article_published_at.encode("utf-8"))
 
     df = pd.DataFrame(i,columns=["title","link","summary","published"])
 
@@ -85,10 +81,5 @@ else:
     tiedosto = raw_input('Give save file name: ')
     if ".csv" not in tiedosto:
         tiedosto = tiedosto + ".csv"
-
-
-print df.head(5)
-
-
 
 df.to_csv(tiedosto, sep=";",index=False,encoding="UTF-8-sig")
