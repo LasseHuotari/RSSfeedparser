@@ -1,4 +1,5 @@
 # encoding=utf8
+import re
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -12,7 +13,6 @@ import time
 from datetime import datetime, timedelta
 import datetime as dt
 from langdetect import detect
-import re
 
 #Csv read
 path = raw_input('Path for the feed file without user: ')
@@ -30,10 +30,9 @@ open(path, "r")
 
 feeds = pd.read_csv(path, sep=";",encoding="UTF-8-sig")
 
-
-list=[]
+list = []
 x = 0
-
+y = 0
 for i in range(int(iterations)):
 
     for ind in feeds.index:
@@ -60,6 +59,8 @@ for i in range(int(iterations)):
                     list.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
 
 
+
+
             else:
                 feed = feedparser.parse(link)
 
@@ -74,6 +75,8 @@ for i in range(int(iterations)):
                     article_published_at = entry.published # Unicode string
                     article_published_at_parsed = entry.published_parsed # Time object
                     list.append({'title' : "{}".format(article_title.encode("utf-8")) , 'link' : "{}".format(article_link.encode("utf-8")), 'summary' : "{}".format(article_summary).encode("utf-8"), 'published': "{}".format(article_published_at.encode("utf-8"))})
+
+
         except:
             print link, "Cannot get feed"
             pass
@@ -81,12 +84,30 @@ for i in range(int(iterations)):
         df = pd.DataFrame(list,columns=["title","link","summary","published"])
         end = time.time()
         print "Request completed in: ", round(end-start,2), "s"
+
+    df = df.drop_duplicates("title")
+    dflen = len(df)
+    print "Amount of news:", dflen
     x=x+1
     print "Iteration", x
 
 
+
     if x < int(iterations):
         time.sleep(int(waiting))
+
+summaries = pd.DataFrame(index=df.index, columns=["summary"])
+
+for ind in df.index:
+    s = df.loc[ind,"summary"]
+    s = re.sub(r'<.+?>', '', s)
+    s = re.sub(r'(?:&#.+?;)', ' ', s)
+    summaries.loc[ind] = s
+
+df = df.drop(columns=['summary'])
+frames = [df, summaries]
+
+df = pd.concat(frames, axis=1)
 
 lvl = pd.DataFrame(index=df.index, columns=["published"])
 
@@ -145,9 +166,10 @@ for ind in df.index:
 
             lvl.loc[ind] = time
 
-    elif "-" in time:
-        if time[-1].isdigit() == True:
+    elif "+" in time:
+        if time[-1] == "0":
             time = time[4:]
+
             if "Jan" in time:
                 time = time.replace('Jan', '-1-')
             elif "Feb" in time:
@@ -186,6 +208,47 @@ for ind in df.index:
 
             lvl.loc[ind] = time
 
+    elif "-" in time:
+        if time[-1].isdigit() == True:
+            time = time[4:]
+
+            if "Jan" in time:
+                time = time.replace('Jan', '-1-')
+            elif "Feb" in time:
+                time = time.replace('Feb', '-2-')
+            elif "Mar" in time:
+                time = time.replace('Mar', '-3-')
+            elif "Apr" in time:
+                time = time.replace('Apr', '-4-')
+            elif "May" in time:
+                time = time.replace('May', '-5-')
+            elif "Jun" in time:
+                time = time.replace('Jun', '-6-')
+            elif "Jul" in time:
+                time = time.replace('Jul', '-7-')
+            elif "Aug" in time:
+                time = time.replace('Aug', '-8-')
+            elif "Sep" in time:
+                time = time.replace('Sep', '-9-')
+            elif "Oct" in time:
+                time = time.replace('Oct', '-10-')
+            elif "Nov" in time:
+                time = time.replace('Nov', '-11-')
+            elif "Dec" in time:
+                time = time.replace('Dec', '-12-')
+            else:
+                time = time
+
+            time = time[:-6]
+            year = time[8:-9]
+            d = time[:3]
+            mm = time[3:-14]
+            clock = time[-8:]
+            time = year + mm + d
+            time = time.replace(' ', '')
+            time = time + " " + clock
+
+            lvl.loc[ind] = time
 
 
     else:
@@ -231,11 +294,12 @@ for ind in df.index:
 df = df.reset_index(drop=True)
 
 df = df.rename(columns={'published': 'publishedORG'})
+
 #df = df.drop(columns=['published'])
 frames = [df, lvl]
 
 df = pd.concat(frames, axis=1)
-df = df.drop_duplicates("title")
+
 lang = pd.DataFrame(index=df.index, columns=["lang"])
 
 for ind in df.index:
@@ -256,38 +320,31 @@ for ind in df.index:
         text = text.replace('"', '')
         text = text.replace('–', '')
         text = text.replace(':', '')
-        text = text.replace(';', ' ')
-        text = text.replace('"', '')
+        teksti = teksti.replace(';', ' ')
+        teksti = teksti.replace('"', '')
         language = detect(text)
         lang.loc[ind] = language
     except:
         pass
 
-text2 = pd.DataFrame(index=df.index, columns=["summary"])
-
+teksti2 = pd.DataFrame(index=df.index, columns=["summary"])
+teksti3 = pd.DataFrame(index=df.index, columns=["published"])
 
 for ind in df.index:
-    try:
-        text = df.loc[ind,"summary"]
-        text = text.replace("’", '')
-        text = text.replace("‘", '')
-        text = text.replace("’", '')
-        text = text.replace('“', '')
-        text = text.replace('”', '')
-        text = text.replace('–', '')
-        text = text.replace('"', '')
-        text = text.replace(';', ' ')
-        text = text.replace('"', '')
-        text = re.sub(r'<.+?>', '', text)
-        text = re.sub(r'(?:&#.+?;)', ' ', text)
-        text2.loc[ind] = text
-    except:
-        pass
+     teksti = df.loc[ind,"summary"]
+     teksti = teksti.str.replace(';', ' ')
+     teksti = teksti.replace('"', '')
+     teksti2.loc[ind] = teksti
 
 
-df = df.drop(columns=['summary','title'])
+df = df.drop(columns=['title'])
+df = df.drop(columns=['summary'])
+frames = [df, teksti1, teksti2,teksti3,lang]
 
-frames = [df, lang, text2]
+df = pd.concat(frames, axis=1)
+
+df['published'].replace('  ', np.nan, inplace=True)
+df.dropna(subset=['published'], inplace=True)
 
 df = pd.concat(frames, axis=1)
 
@@ -303,24 +360,38 @@ if choose == "y":
 
 check = raw_input('Do you want to update old file?(Y/N): ')
 check = check.lower()
+
 if check == "y":
-    file = raw_input('File name for old csv: ')
-    if ".csv" not in file:
-        file = file + ".csv"
+
+    path = raw_input('Insert path where save file is: ')
+    old2 = raw_input('File name for old csv: ')
+    if ".csv" not in old2:
+        old2 = old2 + ".csv"
 
     userhome = os.path.expanduser('~')
-    path= os.path.join(userhome, path, file)
+    path= os.path.join(userhome, path, old2)
+    print path
     open(path, "r")
 
-    old =  pd.read_csv(path, sep=";",encoding="UTF-8-sig")
+    old =  pd.read_csv(old2, sep=";",encoding="UTF-8-sig")
+    pituus = len(old)
+
     frames = [df, old]
     df = pd.concat(frames)
 
+    df = df.drop_duplicates("title")
+
+    pituus2 = len(df)
+
+    print pituus2-pituus, "New records"
+
+    df.to_csv(old2, sep=";",index=False,encoding="UTF-8-sig")
 
 else:
     file = raw_input('Give save file name: ')
     if ".csv" not in file:
         file = file + ".csv"
 
+    print len(df)
 
-df.to_csv(file, sep=";",index=False,encoding="UTF-8-sig")
+    df.to_csv(file, sep=";",index=False,encoding="UTF-8-sig")
